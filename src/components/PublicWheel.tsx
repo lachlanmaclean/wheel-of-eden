@@ -55,33 +55,34 @@ export default function PublicWheel() {
     : null;
   const currentIdea = resultIndex !== null ? ideas[resultIndex] : null;
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center text-neutral-500">
-        Loading wheel...
-      </div>
-    );
-  }
-
-  if (ideas.length === 0) {
-    return (
-      <div className="flex min-h-[420px] items-center justify-center text-neutral-500">
-        No active build ideas yet.
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center gap-6">
-      <IdeaWheel ideas={ideas} resultIndex={resultIndex} size={380} />
-      <div className="text-center">
-        <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
-          Current Build Idea
-        </p>
-        <p className="mt-1 text-2xl font-bold text-emerald-400">
-          {currentIdea ? currentIdea.text : "Not spun yet"}
-        </p>
+    <div className="rounded-2xl border-4 border-wood-darker bg-wood p-5 shadow-lg sm:p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="font-pixel text-xs text-parchment sm:text-sm">Wheel of Builds</h2>
+        <span className="rounded-full border-2 border-wood-darker bg-grass px-3 py-1 text-xs font-semibold text-parchment">
+          spin day
+        </span>
       </div>
+
+      {loading ? (
+        <div className="flex min-h-[340px] items-center justify-center text-parchment-dark">
+          Loading wheel...
+        </div>
+      ) : ideas.length === 0 ? (
+        <div className="flex min-h-[340px] items-center justify-center text-parchment-dark">
+          No active build ideas yet.
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-5">
+          <IdeaWheel ideas={ideas} resultIndex={resultIndex} size={280} />
+          <div className="flex w-full items-center justify-between rounded-lg border-2 border-wood-darker bg-parchment px-4 py-2.5">
+            <span className="text-sm text-ink/60">Current build</span>
+            <span className="font-semibold text-ink">
+              {currentIdea ? currentIdea.text : "Not spun yet"}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Idea } from "@/lib/supabase";
 
 const COLORS = [
-  "#10b981", "#f59e0b", "#ef4444", "#3b82f6",
-  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316",
+  "#6a8f3d", "#e0b23c", "#f3e6c9", "#8fc1d1",
+  "#a8a8a4", "#c9926a", "#e8b923", "#8a5a34",
 ];
 
 type Props = {
@@ -79,9 +79,11 @@ export default function IdeaWheel({
         maxChars = sliceAngle < 40 ? 14 : sliceAngle < 70 ? 20 : 28;
       }
 
+      const color = COLORS[i % COLORS.length];
       return {
         path,
-        color: COLORS[i % COLORS.length],
+        color,
+        textColor: isLight(color) ? "#2b1c10" : "#f3e6c9",
         labelPos,
         textRotation,
         textAnchor,
@@ -120,9 +122,12 @@ export default function IdeaWheel({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative" style={{ width: size, height: size }}>
+      <div
+        className="relative rounded-full shadow-[0_0_0_6px_var(--color-wood-darker)]"
+        style={{ width: size, height: size }}
+      >
         <div className="absolute left-1/2 top-[-10px] z-10 -translate-x-1/2">
-          <div className="h-0 w-0 border-x-[10px] border-t-[18px] border-x-transparent border-t-red-500" />
+          <div className="h-0 w-0 border-x-[10px] border-t-[18px] border-x-transparent border-t-wood-darker" />
         </div>
         <div
           className="transition-transform ease-out"
@@ -141,14 +146,14 @@ export default function IdeaWheel({
             style={{ overflow: "visible" }}
           >
             {slices.map((s, i) => (
-              <path key={i} d={s.path} fill={s.color} stroke="#171717" strokeWidth={1} />
+              <path key={i} d={s.path} fill={s.color} stroke="#4a2e18" strokeWidth={2} />
             ))}
             {slices.map((s, i) => (
               <text
                 key={i}
                 x={s.labelPos.x}
                 y={s.labelPos.y}
-                fill="#fff"
+                fill={s.textColor}
                 fontSize={11}
                 fontWeight={500}
                 textAnchor={s.textAnchor}
@@ -160,7 +165,7 @@ export default function IdeaWheel({
             ))}
           </svg>
         </div>
-        <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-900 ring-2 ring-neutral-300" />
+        <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-wood-darker bg-wood-dark" />
       </div>
     </div>
   );
@@ -178,4 +183,11 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 
 function truncate(text: string, max: number) {
   return text.length > max ? text.slice(0, max - 1) + "…" : text;
+}
+
+function isLight(hex: string) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150;
 }

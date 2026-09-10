@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import confetti from "canvas-confetti";
-import type { Idea } from "@/lib/supabase";
+import type { Idea, Member } from "@/lib/supabase";
 import IdeaWheel from "@/components/IdeaWheel";
+
+const MEMBER_COLORS = [
+  "#8fc1d1", "#e0b23c", "#a8a8a4", "#9dc36b",
+  "#6a8f3d", "#c9926a", "#8a8580", "#8a5a34",
+];
 
 export default function AdminPage() {
   const router = useRouter();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [newIdea, setNewIdea] = useState("");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [newMember, setNewMember] = useState("");
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [resultIndex, setResultIndex] = useState<number | null>(null);
@@ -25,13 +32,15 @@ export default function AdminPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [ideasData, currentData] = await Promise.all([
+      const [ideasData, currentData, membersData] = await Promise.all([
         fetch("/api/ideas").then((r) => r.json()),
         fetch("/api/current-idea").then((r) => r.json()),
+        fetch("/api/members").then((r) => r.json()),
       ]);
       const allIdeas: Idea[] = ideasData.ideas ?? [];
       setIdeas(allIdeas);
       setCurrentIdea(currentData.idea ?? null);
+      setMembers(membersData.members ?? []);
       if (currentData.idea) {
         const active = allIdeas.filter((i) => i.status === "active");
         const idx = active.findIndex((i) => i.id === currentData.idea.id);
@@ -82,6 +91,32 @@ export default function AdminPage() {
   async function deleteIdea(id: string) {
     await fetch(`/api/ideas/${id}`, { method: "DELETE" });
     refreshIdeas();
+  }
+
+  async function refreshMembers() {
+    const res = await fetch("/api/members");
+    const data = await res.json();
+    if (res.ok) setMembers(data.members);
+  }
+
+  async function addMember(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newMember.trim()) return;
+    const color = MEMBER_COLORS[members.length % MEMBER_COLORS.length];
+    const res = await fetch("/api/admin/members", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newMember.trim(), color }),
+    });
+    if (res.ok) {
+      setNewMember("");
+      refreshMembers();
+    }
+  }
+
+  async function deleteMember(id: string) {
+    await fetch(`/api/admin/members/${id}`, { method: "DELETE" });
+    refreshMembers();
   }
 
   async function spin() {
@@ -242,6 +277,51 @@ export default function AdminPage() {
             ))}
             {ideas.length === 0 && (
               <p className="text-sm text-neutral-500">No ideas yet — add one above.</p>
+            )}
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <h2 className="mb-4 text-lg font-semibold">Manage Members</h2>
+          <form onSubmit={addMember} className="mb-6 flex gap-2">
+            <input
+              value={newMember}
+              onChange={(e) => setNewMember(e.target.value)}
+              placeholder="New member name..."
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 outline-none focus:border-emerald-500"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-neutral-700 px-4 py-2 font-medium hover:bg-neutral-600"
+            >
+              Add
+            </button>
+          </form>
+
+          <ul className="flex flex-col gap-2">
+            {members.map((member) => (
+              <li
+                key={member.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-2.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-4 rounded-full"
+                    style={{ backgroundColor: member.color }}
+                  />
+                  <span className="text-neutral-100">{member.name}</span>
+                  <span className="text-sm text-neutral-500">×{member.pineapple_count}</span>
+                </div>
+                <button
+                  onClick={() => deleteMember(member.id)}
+                  className="text-sm text-neutral-500 hover:text-red-400"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+            {members.length === 0 && (
+              <p className="text-sm text-neutral-500">No members yet — add one above.</p>
             )}
           </ul>
         </section>

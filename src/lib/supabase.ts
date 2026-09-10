@@ -16,3 +16,11 @@ export type Idea = {
   status: "active" | "completed" | "archived";
   created_at: string;
 };
+
+export type Member = {
+  id: string;
+  name: string;
+  color: string;
+  pineapple_count: number;
+  created_at: string;
+};

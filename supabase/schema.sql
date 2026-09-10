@@ -36,3 +36,39 @@ create policy "Public read spins" on spins
 
 create policy "Public read settings" on settings
   for select using (true);
+
+-- Pineapple Leaderboard: village members and their pineapple counts.
+-- Incrementing is a public, casual action (no PIN needed) — anyone at the
+-- village hall can log a pineapple. Adding/removing members stays admin-only.
+create table if not exists members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  color text not null default '#a8a29e',
+  pineapple_count int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table members enable row level security;
+
+create policy "Public read members" on members
+  for select using (true);
+
+create or replace function increment_pineapple(member_id uuid)
+returns members
+language sql
+as $$
+  update members set pineapple_count = pineapple_count + 1
+  where id = member_id
+  returning *;
+$$;
+
+insert into members (name, color, pineapple_count) values
+  ('Moss', '#8fc1d1', 5),
+  ('Quill', '#e0b23c', 4),
+  ('Bram', '#a8a8a4', 4),
+  ('Wren', '#9dc36b', 3),
+  ('Tamar', '#6a8f3d', 3),
+  ('Ivy', '#c9926a', 2),
+  ('Cinder', '#8a8580', 2),
+  ('Pip', '#8a5a34', 1)
+on conflict (name) do nothing;
