@@ -19,15 +19,17 @@ export default function AdminPage() {
   const activeIdeas = ideas.filter((i) => i.status === "active");
 
   useEffect(() => {
-    loadIdeas();
+    (async () => {
+      setLoading(true);
+      await refreshIdeas();
+      setLoading(false);
+    })();
   }, []);
 
-  async function loadIdeas() {
-    setLoading(true);
+  async function refreshIdeas() {
     const res = await fetch("/api/ideas");
     const data = await res.json();
     if (res.ok) setIdeas(data.ideas);
-    setLoading(false);
   }
 
   async function addIdea(e: React.FormEvent) {
@@ -40,7 +42,7 @@ export default function AdminPage() {
     });
     if (res.ok) {
       setNewIdea("");
-      loadIdeas();
+      refreshIdeas();
     }
   }
 
@@ -50,12 +52,12 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    loadIdeas();
+    refreshIdeas();
   }
 
   async function deleteIdea(id: string) {
     await fetch(`/api/ideas/${id}`, { method: "DELETE" });
-    loadIdeas();
+    refreshIdeas();
   }
 
   async function spin() {
@@ -79,7 +81,7 @@ export default function AdminPage() {
     setTargetIndex(null);
     setWinner(pendingWinner);
     setPendingWinner(null);
-    loadIdeas();
+    refreshIdeas();
   }
 
   async function logout() {

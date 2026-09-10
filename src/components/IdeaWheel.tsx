@@ -39,7 +39,19 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
       ].join(" ");
       const midAngle = startAngle + sliceAngle / 2;
       const labelPos = polarToCartesian(center, center, radius * 0.62, midAngle);
-      return { path, color: COLORS[i % COLORS.length], labelPos, midAngle, idea };
+      // Text runs along the radial line (midAngle). Flip it 180° on the
+      // bottom half so it never renders upside down.
+      const normalized = ((midAngle % 360) + 360) % 360;
+      const textRotation = normalized > 90 && normalized < 270 ? midAngle + 180 : midAngle;
+      const maxChars = sliceAngle < 40 ? 14 : sliceAngle < 70 ? 20 : 28;
+      return {
+        path,
+        color: COLORS[i % COLORS.length],
+        labelPos,
+        textRotation,
+        idea,
+        label: truncate(idea.text, maxChars),
+      };
     });
   }, [ideas, sliceAngle, center, radius]);
 
@@ -77,24 +89,24 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
         >
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             {slices.map((s, i) => (
-              <g key={i}>
-                <path d={s.path} fill={s.color} stroke="#171717" strokeWidth={1} />
-              </g>
+              <path key={i} d={s.path} fill={s.color} stroke="#171717" strokeWidth={1} />
+            ))}
+            {slices.map((s, i) => (
+              <text
+                key={i}
+                x={s.labelPos.x}
+                y={s.labelPos.y}
+                fill="#fff"
+                fontSize={11}
+                fontWeight={500}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                transform={`rotate(${s.textRotation} ${s.labelPos.x} ${s.labelPos.y})`}
+              >
+                {s.label}
+              </text>
             ))}
           </svg>
-          {slices.map((s, i) => (
-            <div
-              key={i}
-              className="pointer-events-none absolute w-24 -translate-x-1/2 -translate-y-1/2 text-center text-[11px] font-medium leading-tight text-white"
-              style={{
-                left: s.labelPos.x,
-                top: s.labelPos.y,
-                transform: `translate(-50%, -50%) rotate(${s.midAngle}deg)`,
-              }}
-            >
-              {truncate(s.idea.text, 28)}
-            </div>
-          ))}
         </div>
         <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-900 ring-2 ring-neutral-300" />
       </div>
