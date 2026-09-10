@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Idea } from "@/lib/supabase";
 import IdeaWheel from "@/components/IdeaWheel";
 
@@ -101,7 +102,15 @@ export default function AdminPage() {
     <main className="min-h-screen bg-neutral-950 px-4 py-10 text-neutral-100">
       <div className="mx-auto flex max-w-4xl flex-col gap-10">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Idea Wheel — Admin</h1>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm text-neutral-400 underline hover:text-neutral-200"
+            >
+              ← Dashboard
+            </Link>
+            <h1 className="text-2xl font-semibold">Idea Wheel — Admin</h1>
+          </div>
           <button
             onClick={logout}
             className="text-sm text-neutral-400 underline hover:text-neutral-200"
