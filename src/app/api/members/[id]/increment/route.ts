@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// Public — anyone at the village hall can log a pineapple, no PIN needed.
+// Public — anyone on the homepage can log a pineapple, no PIN needed.
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

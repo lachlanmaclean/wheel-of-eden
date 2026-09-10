@@ -11,7 +11,7 @@ export default function Home() {
           </div>
           <div>
             <h1 className="font-pixel text-sm text-parchment sm:text-base">Eden</h1>
-            <p className="text-xs text-parchment-dark">village hall</p>
+            <p className="text-xs text-parchment-dark">minecraft homepage</p>
           </div>
         </div>
       </header>
@@ -22,7 +22,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t-4 border-wood-darker bg-wood-dark px-4 py-3 text-center text-xs text-parchment-dark">
-        Eden · a private village · keep it cozy
+        &ldquo;The LORD God took the man and put him in the Garden of Eden to work it and take care of it.&rdquo; · Genesis 2:15
       </footer>
     </main>
   );

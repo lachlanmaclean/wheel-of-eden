@@ -20,7 +20,7 @@ const pressStart2P = Press_Start_2P({
 
 export const metadata: Metadata = {
   title: "Eden",
-  description: "The Eden village hall",
+  description: "The Eden Minecraft homepage",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

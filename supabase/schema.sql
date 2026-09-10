@@ -39,7 +39,7 @@ create policy "Public read settings" on settings
 
 -- Pineapple Leaderboard: village members and their pineapple counts.
 -- Incrementing is a public, casual action (no PIN needed) — anyone at the
--- village hall can log a pineapple. Adding/removing members stays admin-only.
+-- homepage can log a pineapple. Adding/removing members stays admin-only.
 create table if not exists members (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
