@@ -38,17 +38,46 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
         "Z",
       ].join(" ");
       const midAngle = startAngle + sliceAngle / 2;
-      const labelPos = polarToCartesian(center, center, radius * 0.62, midAngle);
-      // Text runs along the radial line (midAngle). Flip it 180° on the
-      // bottom half so it never renders upside down.
       const normalized = ((midAngle % 360) + 360) % 360;
-      const textRotation = normalized > 90 && normalized < 270 ? midAngle + 180 : midAngle;
-      const maxChars = sliceAngle < 40 ? 14 : sliceAngle < 70 ? 20 : 28;
+      // Once slices get thin, text won't fit tangentially — run it radially
+      // (outward from the center) instead so it has the full radius to work
+      // with rather than being squeezed into a narrow wedge width.
+      const radial = ideas.length > 10;
+      const onLeftHalf = normalized > 180 && normalized < 360;
+
+      let labelPos: { x: number; y: number };
+      let textRotation: number;
+      let textAnchor: "start" | "middle" | "end";
+      let maxChars: number;
+
+      if (radial) {
+        // Text baseline points outward (midAngle - 90 in SVG's clockwise-
+        // from-east rotation convention). On the left half that would render
+        // upside down, so flip 180° and anchor from the rim inward instead.
+        if (onLeftHalf) {
+          labelPos = polarToCartesian(center, center, radius * 0.92, midAngle);
+          textRotation = midAngle + 90;
+          textAnchor = "end";
+        } else {
+          labelPos = polarToCartesian(center, center, radius * 0.2, midAngle);
+          textRotation = midAngle - 90;
+          textAnchor = "start";
+        }
+        maxChars = 22;
+      } else {
+        labelPos = polarToCartesian(center, center, radius * 0.62, midAngle);
+        // Flip 180° on the bottom half so tangential text never renders upside down.
+        textRotation = normalized > 90 && normalized < 270 ? midAngle + 180 : midAngle;
+        textAnchor = "middle";
+        maxChars = sliceAngle < 40 ? 14 : sliceAngle < 70 ? 20 : 28;
+      }
+
       return {
         path,
         color: COLORS[i % COLORS.length],
         labelPos,
         textRotation,
+        textAnchor,
         idea,
         label: truncate(idea.text, maxChars),
       };
@@ -99,7 +128,7 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
                 fill="#fff"
                 fontSize={11}
                 fontWeight={500}
-                textAnchor="middle"
+                textAnchor={s.textAnchor}
                 dominantBaseline="middle"
                 transform={`rotate(${s.textRotation} ${s.labelPos.x} ${s.labelPos.y})`}
               >
