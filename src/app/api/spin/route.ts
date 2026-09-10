@@ -7,7 +7,8 @@ export async function POST() {
   const { data: activeIdeas, error: fetchError } = await supabaseAdmin
     .from("ideas")
     .select("*")
-    .eq("status", "active");
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
 
   if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
   if (!activeIdeas || activeIdeas.length === 0) {

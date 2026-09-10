@@ -12,7 +12,7 @@ export default function AdminPage() {
   const [newIdea, setNewIdea] = useState("");
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
-  const [targetIndex, setTargetIndex] = useState<number | null>(null);
+  const [resultIndex, setResultIndex] = useState<number | null>(null);
   const [pendingWinner, setPendingWinner] = useState<Idea | null>(null);
   const [winner, setWinner] = useState<Idea | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,18 @@ export default function AdminPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([refreshIdeas(), refreshCurrentIdea()]);
+      const [ideasData, currentData] = await Promise.all([
+        fetch("/api/ideas").then((r) => r.json()),
+        fetch("/api/current-idea").then((r) => r.json()),
+      ]);
+      const allIdeas: Idea[] = ideasData.ideas ?? [];
+      setIdeas(allIdeas);
+      setCurrentIdea(currentData.idea ?? null);
+      if (currentData.idea) {
+        const active = allIdeas.filter((i) => i.status === "active");
+        const idx = active.findIndex((i) => i.id === currentData.idea.id);
+        setResultIndex(idx === -1 ? null : idx);
+      }
       setLoading(false);
     })();
   }, []);
@@ -35,16 +46,11 @@ export default function AdminPage() {
     if (res.ok) setIdeas(data.ideas);
   }
 
-  async function refreshCurrentIdea() {
-    const res = await fetch("/api/current-idea");
-    const data = await res.json();
-    if (res.ok) setCurrentIdea(data.idea);
-  }
-
   async function clearCurrentIdea() {
     setClearing(true);
     await fetch("/api/current-idea/clear", { method: "POST" });
     setCurrentIdea(null);
+    setResultIndex(null);
     setWinner(null);
     setClearing(false);
   }
@@ -87,18 +93,17 @@ export default function AdminPage() {
       setError(data.error ?? "Spin failed");
       return;
     }
-    const idx = data.ideas.findIndex((i: Idea) => i.id === data.winner.id);
+    const idx = activeIdeas.findIndex((i) => i.id === data.winner.id);
     setPendingWinner(data.winner);
-    setTargetIndex(idx);
+    setResultIndex(idx === -1 ? 0 : idx);
     setSpinning(true);
   }
 
   function handleDoneAnimating() {
     setSpinning(false);
-    setTargetIndex(null);
     setWinner(pendingWinner);
-    setPendingWinner(null);
     setCurrentIdea(pendingWinner);
+    setPendingWinner(null);
     refreshIdeas();
   }
 
@@ -159,7 +164,7 @@ export default function AdminPage() {
             <IdeaWheel
               ideas={activeIdeas}
               spinning={spinning}
-              targetIndex={targetIndex}
+              resultIndex={resultIndex}
               onDoneAnimating={handleDoneAnimating}
             />
           ) : (

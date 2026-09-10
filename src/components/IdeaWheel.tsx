@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Idea } from "@/lib/supabase";
 
 const COLORS = [
@@ -10,19 +10,30 @@ const COLORS = [
 
 type Props = {
   ideas: Idea[];
-  onSpinComplete?: (winner: Idea) => void;
-  spinning: boolean;
-  targetIndex: number | null;
+  size?: number;
+  /** Index (within `ideas`) that should be at rest under the pointer. */
+  resultIndex: number | null;
+  /** True only while the flashy multi-rotation spin animation should play. */
+  spinning?: boolean;
   onDoneAnimating?: () => void;
 };
 
-export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimating }: Props) {
-  const [rotation, setRotation] = useState(0);
-  const size = 320;
+export default function IdeaWheel({
+  ideas,
+  size = 320,
+  resultIndex,
+  spinning = false,
+  onDoneAnimating,
+}: Props) {
   const center = size / 2;
   const radius = size / 2 - 4;
   const sliceAngle = ideas.length > 0 ? 360 / ideas.length : 0;
-  const wheelRef = useRef<HTMLDivElement>(null);
+
+  const [rotation, setRotation] = useState(() =>
+    resultIndex !== null ? restRotationFor(resultIndex, sliceAngle) : 0
+  );
+  const [transitionMs, setTransitionMs] = useState(0);
+  const prevResultIndex = useRef(resultIndex);
 
   const slices = useMemo(() => {
     return ideas.map((idea, i) => {
@@ -55,15 +66,15 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
         // from-east rotation convention). On the left half that would render
         // upside down, so flip 180° and anchor from the rim inward instead.
         if (onLeftHalf) {
-          labelPos = polarToCartesian(center, center, radius * 0.92, midAngle);
+          labelPos = polarToCartesian(center, center, radius * 0.88, midAngle);
           textRotation = midAngle + 90;
           textAnchor = "end";
         } else {
-          labelPos = polarToCartesian(center, center, radius * 0.2, midAngle);
+          labelPos = polarToCartesian(center, center, radius * 0.24, midAngle);
           textRotation = midAngle - 90;
           textAnchor = "start";
         }
-        maxChars = 22;
+        maxChars = 18;
       } else {
         labelPos = polarToCartesian(center, center, radius * 0.62, midAngle);
         // Flip 180° on the bottom half so tangential text never renders upside down.
@@ -84,20 +95,32 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
     });
   }, [ideas, sliceAngle, center, radius]);
 
-  // When targetIndex is set, animate to land the pointer (fixed at top, 0deg)
-  // on that slice's midpoint, after several full spins.
-  useMemo(() => {
-    if (targetIndex === null || !spinning) return;
-    const midAngle = targetIndex * sliceAngle + sliceAngle / 2;
-    const extraSpins = 5 * 360;
-    // Wheel rotates clockwise; pointer is at top (0deg / 12 o'clock).
-    // We rotate so that the slice's midAngle ends up at the top.
-    const finalRotation = extraSpins + (360 - midAngle);
-    setRotation((prev) => {
-      const base = prev % 360;
-      return prev - base + finalRotation;
-    });
-  }, [targetIndex, spinning, sliceAngle]);
+  // Animate to a new resultIndex: a flashy multi-spin when `spinning` is
+  // true (the admin just hit Spin), or a short direct rotation otherwise
+  // (e.g. the public dashboard picking up a change on its next poll).
+  useEffect(() => {
+    if (resultIndex === null || resultIndex === prevResultIndex.current) {
+      prevResultIndex.current = resultIndex;
+      return;
+    }
+    const target = restRotationFor(resultIndex, sliceAngle);
+
+    if (spinning) {
+      setTransitionMs(4000);
+      setRotation((prev) => {
+        const base = ((prev % 360) + 360) % 360;
+        return prev - base + 5 * 360 + target;
+      });
+    } else {
+      setTransitionMs(1200);
+      setRotation((prev) => {
+        const base = ((prev % 360) + 360) % 360;
+        const delta = (((target - base + 540) % 360) + 360) % 360 - 180;
+        return prev + delta;
+      });
+    }
+    prevResultIndex.current = resultIndex;
+  }, [resultIndex, spinning, sliceAngle]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -106,17 +129,21 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
           <div className="h-0 w-0 border-x-[10px] border-t-[18px] border-x-transparent border-t-red-500" />
         </div>
         <div
-          ref={wheelRef}
           className="transition-transform ease-out"
           style={{
-            transitionDuration: spinning ? "4s" : "0s",
+            transitionDuration: `${transitionMs}ms`,
             transform: `rotate(${rotation}deg)`,
           }}
           onTransitionEnd={() => {
             if (spinning) onDoneAnimating?.();
           }}
         >
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <svg
+            width={size}
+            height={size}
+            viewBox={`0 0 ${size} ${size}`}
+            style={{ overflow: "visible" }}
+          >
             {slices.map((s, i) => (
               <path key={i} d={s.path} fill={s.color} stroke="#171717" strokeWidth={1} />
             ))}
@@ -141,6 +168,11 @@ export default function IdeaWheel({ ideas, spinning, targetIndex, onDoneAnimatin
       </div>
     </div>
   );
+}
+
+function restRotationFor(index: number, sliceAngle: number) {
+  const midAngle = index * sliceAngle + sliceAngle / 2;
+  return ((360 - midAngle) % 360 + 360) % 360;
 }
 
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
