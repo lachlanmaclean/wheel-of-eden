@@ -6,31 +6,15 @@ import type { Member } from "@/lib/supabase";
 export default function PineappleLeaderboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pendingId, setPendingId] = useState<string | null>(null);
 
   useEffect(() => {
-    refresh();
+    (async () => {
+      const res = await fetch("/api/members");
+      const data = await res.json();
+      if (res.ok) setMembers(data.members);
+      setLoading(false);
+    })();
   }, []);
-
-  async function refresh() {
-    const res = await fetch("/api/members");
-    const data = await res.json();
-    if (res.ok) setMembers(data.members);
-    setLoading(false);
-  }
-
-  async function increment(id: string) {
-    if (pendingId) return;
-    setPendingId(id);
-    setMembers((prev) =>
-      prev
-        .map((m) => (m.id === id ? { ...m, pineapple_count: m.pineapple_count + 1 } : m))
-        .sort((a, b) => b.pineapple_count - a.pineapple_count || a.name.localeCompare(b.name))
-    );
-    await fetch(`/api/members/${id}/increment`, { method: "POST" });
-    setPendingId(null);
-    refresh();
-  }
 
   const total = members.reduce((sum, m) => sum + m.pineapple_count, 0);
 
@@ -64,13 +48,6 @@ export default function PineappleLeaderboard() {
               />
               <span className="flex-1 font-medium text-ink">{member.name}</span>
               <span className="text-sm font-semibold text-wood-dark">×{member.pineapple_count}</span>
-              <button
-                onClick={() => increment(member.id)}
-                disabled={pendingId === member.id}
-                className="rounded-md border-2 border-wood-darker bg-gold px-3 py-1 text-sm font-bold text-ink transition hover:brightness-105 disabled:opacity-50"
-              >
-                +1
-              </button>
             </li>
           ))}
         </ul>

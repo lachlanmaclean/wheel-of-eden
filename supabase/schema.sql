@@ -37,9 +37,10 @@ create policy "Public read spins" on spins
 create policy "Public read settings" on settings
   for select using (true);
 
+drop function if exists increment_pineapple(uuid);
+
 -- Pineapple Leaderboard: village members and their pineapple counts.
--- Incrementing is a public, casual action (no PIN needed) — anyone at the
--- homepage can log a pineapple. Adding/removing members stays admin-only.
+-- Publicly viewable, but only the admin can change a count or the member list.
 create table if not exists members (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
@@ -52,15 +53,6 @@ alter table members enable row level security;
 
 create policy "Public read members" on members
   for select using (true);
-
-create or replace function increment_pineapple(member_id uuid)
-returns members
-language sql
-as $$
-  update members set pineapple_count = pineapple_count + 1
-  where id = member_id
-  returning *;
-$$;
 
 insert into members (name, color, pineapple_count) values
   ('Moss', '#8fc1d1', 5),
