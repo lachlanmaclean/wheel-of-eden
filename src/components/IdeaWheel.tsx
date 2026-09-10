@@ -54,7 +54,6 @@ export default function IdeaWheel({
       // (outward from the center) instead so it has the full radius to work
       // with rather than being squeezed into a narrow wedge width.
       const radial = ideas.length > 10;
-      const onLeftHalf = normalized > 180 && normalized < 360;
 
       let labelPos: { x: number; y: number };
       let textRotation: number;
@@ -62,19 +61,16 @@ export default function IdeaWheel({
       let maxChars: number;
 
       if (radial) {
-        // Text baseline points outward (midAngle - 90 in SVG's clockwise-
-        // from-east rotation convention). On the left half that would render
-        // upside down, so flip 180° and anchor from the rim inward instead.
-        if (onLeftHalf) {
-          labelPos = polarToCartesian(center, center, radius * 0.88, midAngle);
-          textRotation = midAngle + 90;
-          textAnchor = "end";
-        } else {
-          labelPos = polarToCartesian(center, center, radius * 0.24, midAngle);
-          textRotation = midAngle - 90;
-          textAnchor = "start";
-        }
-        maxChars = 18;
+        // Every label sits inside its wedge near the rim, ending at the same
+        // point and rotated by the same rule (midAngle - 90) all the way
+        // around. That keeps every slice's label facing the same rotational
+        // direction — on the left half that means the label reads upside
+        // down, same as a physical spin wheel, rather than being flipped
+        // upright and breaking the uniform look.
+        labelPos = polarToCartesian(center, center, radius * 0.9, midAngle);
+        textRotation = midAngle - 90;
+        textAnchor = "end";
+        maxChars = 16;
       } else {
         labelPos = polarToCartesian(center, center, radius * 0.62, midAngle);
         // Flip 180° on the bottom half so tangential text never renders upside down.

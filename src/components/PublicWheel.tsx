@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import type { Idea } from "@/lib/supabase";
 import IdeaWheel from "@/components/IdeaWheel";
 
@@ -11,6 +12,7 @@ export default function PublicWheel() {
   const [currentIdeaId, setCurrentIdeaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const loadedOnce = useRef(false);
+  const prevIdeaId = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,7 +23,14 @@ export default function PublicWheel() {
         const data = await res.json();
         if (cancelled || !res.ok) return;
         setIdeas(data.ideas ?? []);
-        setCurrentIdeaId(data.currentIdeaId ?? null);
+        const nextId: string | null = data.currentIdeaId ?? null;
+        // Only celebrate when the winner actually changes after the first
+        // load — not on the initial fetch, which just reflects the last spin.
+        if (loadedOnce.current && nextId && nextId !== prevIdeaId.current) {
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        }
+        prevIdeaId.current = nextId;
+        setCurrentIdeaId(nextId);
       } finally {
         if (!cancelled && !loadedOnce.current) {
           loadedOnce.current = true;

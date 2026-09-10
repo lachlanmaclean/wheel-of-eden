@@ -17,17 +17,12 @@ export async function POST() {
 
   const winner = activeIdeas[Math.floor(Math.random() * activeIdeas.length)];
 
-  const { error: settingsError } = await supabaseAdmin
-    .from("settings")
-    .update({ current_idea_id: winner.id })
-    .eq("id", 1);
+  const [{ error: settingsError }, { error: spinError }] = await Promise.all([
+    supabaseAdmin.from("settings").update({ current_idea_id: winner.id }).eq("id", 1),
+    supabaseAdmin.from("spins").insert({ idea_id: winner.id }),
+  ]);
 
   if (settingsError) return NextResponse.json({ error: settingsError.message }, { status: 500 });
-
-  const { error: spinError } = await supabaseAdmin
-    .from("spins")
-    .insert({ idea_id: winner.id });
-
   if (spinError) return NextResponse.json({ error: spinError.message }, { status: 500 });
 
   // Return the full active list (in the order the wheel should render them)

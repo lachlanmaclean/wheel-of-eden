@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import confetti from "canvas-confetti";
 import type { Idea } from "@/lib/supabase";
 import IdeaWheel from "@/components/IdeaWheel";
 
@@ -105,6 +106,11 @@ export default function AdminPage() {
     setCurrentIdea(pendingWinner);
     setPendingWinner(null);
     refreshIdeas();
+    confetti({
+      particleCount: 150,
+      spread: 80,
+      origin: { y: 0.6 },
+    });
   }
 
   async function logout() {
