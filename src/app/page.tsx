@@ -10,7 +10,7 @@ export default function Home() {
             🌰
           </div>
           <div>
-            <h1 className="font-pixel text-sm text-parchment sm:text-base">Acorn Hollow</h1>
+            <h1 className="font-pixel text-sm text-parchment sm:text-base">Eden</h1>
             <p className="text-xs text-parchment-dark">village hall</p>
           </div>
         </div>
@@ -22,7 +22,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t-4 border-wood-darker bg-wood-dark px-4 py-3 text-center text-xs text-parchment-dark">
-        The Acorn Hollow · a private village · keep it cozy
+        Eden · a private village · keep it cozy
       </footer>
     </main>
   );

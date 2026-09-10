@@ -19,8 +19,8 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: "Acorn Hollow",
-  description: "The Acorn Hollow village hall",
+  title: "Eden",
+  description: "The Eden village hall",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
