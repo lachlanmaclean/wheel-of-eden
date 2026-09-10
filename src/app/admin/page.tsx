@@ -16,13 +16,15 @@ export default function AdminPage() {
   const [pendingWinner, setPendingWinner] = useState<Idea | null>(null);
   const [winner, setWinner] = useState<Idea | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentIdea, setCurrentIdea] = useState<Idea | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   const activeIdeas = ideas.filter((i) => i.status === "active");
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await refreshIdeas();
+      await Promise.all([refreshIdeas(), refreshCurrentIdea()]);
       setLoading(false);
     })();
   }, []);
@@ -31,6 +33,20 @@ export default function AdminPage() {
     const res = await fetch("/api/ideas");
     const data = await res.json();
     if (res.ok) setIdeas(data.ideas);
+  }
+
+  async function refreshCurrentIdea() {
+    const res = await fetch("/api/current-idea");
+    const data = await res.json();
+    if (res.ok) setCurrentIdea(data.idea);
+  }
+
+  async function clearCurrentIdea() {
+    setClearing(true);
+    await fetch("/api/current-idea/clear", { method: "POST" });
+    setCurrentIdea(null);
+    setWinner(null);
+    setClearing(false);
   }
 
   async function addIdea(e: React.FormEvent) {
@@ -82,6 +98,7 @@ export default function AdminPage() {
     setTargetIndex(null);
     setWinner(pendingWinner);
     setPendingWinner(null);
+    setCurrentIdea(pendingWinner);
     refreshIdeas();
   }
 
@@ -118,6 +135,24 @@ export default function AdminPage() {
             Log out
           </button>
         </div>
+
+        <section className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <div>
+            <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-500">
+              Current Dashboard Idea
+            </h2>
+            <p className="mt-1 text-lg font-semibold text-emerald-400">
+              {currentIdea ? currentIdea.text : "None"}
+            </p>
+          </div>
+          <button
+            onClick={clearCurrentIdea}
+            disabled={!currentIdea || clearing}
+            className="rounded-lg border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-300 transition hover:border-red-500 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {clearing ? "Clearing..." : "Clear"}
+          </button>
+        </section>
 
         <section className="flex flex-col items-center gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-8">
           {activeIdeas.length > 0 ? (
